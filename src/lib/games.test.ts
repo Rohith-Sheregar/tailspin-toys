@@ -3,8 +3,11 @@ import { createTestDatabase } from '../../db/test-helpers';
 import { categories, publishers, games } from '../../db/schema';
 import type { Database } from './db';
 import {
+    getAllCategories,
     getAllGames,
     getAllGameIds,
+    getAllPublishers,
+    getFilteredGames,
     getGameById,
 } from './games';
 
@@ -62,5 +65,62 @@ describe('games data-access helpers', () => {
     it('returns null for a non-existent game', async () => {
         await seedGames(db, 2);
         expect(await getGameById(db, 99999)).toBeNull();
+    });
+
+    it('lists all categories and publishers in name order', async () => {
+        await db.insert(categories).values([
+            { name: 'Puzzle', description: 'p' },
+            { name: 'Strategy', description: 's' },
+        ]);
+        await db.insert(publishers).values([
+            { name: 'Bellwether', description: 'b' },
+            { name: 'Northstar', description: 'n' },
+        ]);
+
+        await expect(getAllCategories(db)).resolves.toEqual([
+            { id: expect.any(Number), name: 'Puzzle' },
+            { id: expect.any(Number), name: 'Strategy' },
+        ]);
+        await expect(getAllPublishers(db)).resolves.toEqual([
+            { id: expect.any(Number), name: 'Bellwether' },
+            { id: expect.any(Number), name: 'Northstar' },
+        ]);
+    });
+
+    it('filters games by category, publisher, and both together', async () => {
+        const [strategy] = await db
+            .insert(categories)
+            .values({ name: 'Strategy', description: 's' })
+            .returning({ id: categories.id });
+        const [puzzle] = await db
+            .insert(categories)
+            .values({ name: 'Puzzle', description: 'p' })
+            .returning({ id: categories.id });
+        const [northstar] = await db
+            .insert(publishers)
+            .values({ name: 'Northstar', description: 'n' })
+            .returning({ id: publishers.id });
+        const [bellwether] = await db
+            .insert(publishers)
+            .values({ name: 'Bellwether', description: 'b' })
+            .returning({ id: publishers.id });
+
+        await db.insert(games).values([
+            { title: 'Alpha', description: 'A', starRating: 4.5, categoryId: strategy.id, publisherId: northstar.id },
+            { title: 'Beta', description: 'B', starRating: 3.8, categoryId: puzzle.id, publisherId: northstar.id },
+            { title: 'Gamma', description: 'C', starRating: 4.1, categoryId: strategy.id, publisherId: bellwether.id },
+        ]);
+
+        await expect(getFilteredGames(db, { categoryIds: [strategy.id] })).resolves.toEqual([
+            expect.objectContaining({ title: 'Alpha' }),
+            expect.objectContaining({ title: 'Gamma' }),
+        ]);
+        await expect(getFilteredGames(db, { publisherId: northstar.id })).resolves.toEqual([
+            expect.objectContaining({ title: 'Alpha' }),
+            expect.objectContaining({ title: 'Beta' }),
+        ]);
+        await expect(getFilteredGames(db, { categoryIds: [strategy.id], publisherId: northstar.id })).resolves.toEqual([
+            expect.objectContaining({ title: 'Alpha' }),
+        ]);
     });
 });

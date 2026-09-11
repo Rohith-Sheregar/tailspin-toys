@@ -27,6 +27,10 @@ export default [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // Keep TypeScript and Astro formatting consistent without a separate formatter.
+      "object-curly-spacing": ["error", "always"],
+      "no-multiple-empty-lines": ["error", { max: 1 }],
+      eqeqeq: ["error", "always"],
     },
   },
 

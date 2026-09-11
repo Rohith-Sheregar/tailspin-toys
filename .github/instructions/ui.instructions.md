@@ -20,6 +20,12 @@ Refer to technology-specific instruction files:
 
 ## Core Principles
 
+### Comments and Documentation
+
+- Comments explain intent, product or accessibility decisions, and non-obvious constraints. They must not restate what the markup, class names, or code already make clear.
+- Document public component contracts in the `Props` interface. Add property comments for fields whose purpose, default, or constraints are not obvious.
+- Keep comments current; update or delete a related comment in the same change when the implementation changes.
+
 ### Testability
 
 - Every interactive element MUST include a `data-testid` attribute
@@ -68,3 +74,10 @@ Refer to technology-specific instruction files:
    - Test keyboard navigation
    - Check focus states
    - Validate semantic structure
+
+## TypeScript Formatting
+
+- Follow the existing TypeScript formatting conventions: single quotes, semicolons, trailing commas in multiline constructs, and spaces inside object braces.
+- ESLint enforces the formatting rules that are compatible with the current codebase, including object spacing and repeated-blank-line checks, along with `eqeqeq`. Do not introduce a new formatting rule without first addressing its existing repository-wide violations.
+- Keep TypeScript parameters and return types explicit in data-access code.
+- Run `npm run lint` through the `quality-checks` skill before submitting changes.
